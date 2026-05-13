@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'providers/auth_provider.dart';
 import '../domain/auth_state.dart';
-import 'login_screen.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -12,31 +11,39 @@ class SplashScreen extends ConsumerStatefulWidget {
 }
 
 class _SplashScreenState extends ConsumerState<SplashScreen> {
+  bool _hasNavigated = false;
+
   @override
   void initState() {
     super.initState();
-    _checkAuthAndNavigate();
+    _startSplash();
   }
 
-  Future<void> _checkAuthAndNavigate() async {
-    // Check if user is already logged in
-    await ref.read(authProvider.notifier).checkAuthStatus();
-    
+  Future<void> _startSplash() async {
     await Future.delayed(const Duration(seconds: 1));
-    
     if (mounted) {
-      final authState = ref.read(authProvider);
-      
-      if (authState is AuthAuthenticated) {
-        Navigator.pushReplacementNamed(context, '/dashboard');
-      } else {
-        Navigator.pushReplacementNamed(context, '/login');
-      }
+      ref.read(authProvider.notifier).checkAuthStatus();
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(authProvider);
+    
+    if (!_hasNavigated) {
+      if (authState is AuthAuthenticated) {
+        _hasNavigated = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) Navigator.pushReplacementNamed(context, '/dashboard');
+        });
+      } else if (authState is AuthUnauthenticated) {
+        _hasNavigated = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) Navigator.pushReplacementNamed(context, '/login');
+        });
+      }
+    }
+
     return Scaffold(
       body: Container(
         width: double.infinity,
