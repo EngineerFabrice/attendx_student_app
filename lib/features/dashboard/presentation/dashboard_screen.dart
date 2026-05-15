@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'providers/dashboard_provider.dart';
 import 'widgets/active_session_card.dart';
 import 'widgets/attendance_summary_card.dart';
+import '../../../../shared/widgets/main_bottom_nav.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -32,7 +33,7 @@ class DashboardScreen extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Hello, ${dashboardState.profile?.fullName?.split(' ').first ?? 'Student'}!',
+                      'Hello, ${dashboardState.profile?.fullName.split(' ').first ?? 'Student'}!',
                       style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 8),
@@ -68,10 +69,10 @@ class DashboardScreen extends ConsumerWidget {
                 ),
               ),
             ),
-      bottomNavigationBar: _buildBottomNavigationBar(context),
+      bottomNavigationBar: const MainBottomNav(currentIndex: 0),
     );
   }
-  
+
   Widget _buildEmptySessionsCard() {
     return Card(
       child: Padding(
@@ -142,20 +143,4 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
   
-  Widget _buildBottomNavigationBar(BuildContext context) {
-    return BottomNavigationBar(
-      currentIndex: 0,
-      onTap: (index) {
-        if (index == 1) Navigator.pushNamed(context, '/history');
-        if (index == 2) Navigator.pushNamed(context, '/analytics');
-        if (index == 3) Navigator.pushNamed(context, '/profile');
-      },
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.dashboard), label: 'Home'),
-        BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
-        BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: 'Analytics'),
-        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-      ],
-    );
-  }
 }

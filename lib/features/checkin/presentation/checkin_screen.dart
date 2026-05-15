@@ -18,6 +18,7 @@ class _CheckinScreenState extends ConsumerState<CheckinScreen> {
   bool _isCheckingIn = false;
   String? _errorMessage;
   
+  bool _initialized = false;
   late String sessionId;
   late String sessionCode;
   late String courseName;
@@ -29,14 +30,16 @@ class _CheckinScreenState extends ConsumerState<CheckinScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    if (_initialized) return;
+    _initialized = true;
     final args = ModalRoute.of(context)!.settings.arguments as Map;
-    sessionId = args['sessionId'];
-    sessionCode = args['sessionCode'];
-    courseName = args['courseName'];
-    roomName = args['roomName'];
-    classroomLat = args['classroomLat'];
-    classroomLng = args['classroomLng'];
-    radiusM = args['radiusM'];
+    sessionId = args['sessionId'] as String;
+    sessionCode = args['sessionCode'] as String;
+    courseName = args['courseName'] as String;
+    roomName = args['roomName'] as String;
+    classroomLat = args['classroomLat'] as double;
+    classroomLng = args['classroomLng'] as double;
+    radiusM = args['radiusM'] as double;
     _getCurrentLocation();
   }
 
@@ -65,7 +68,9 @@ class _CheckinScreenState extends ConsumerState<CheckinScreen> {
 
     try {
       final position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
       );
       
       final distance = Haversine.calculateDistance(
@@ -108,6 +113,7 @@ class _CheckinScreenState extends ConsumerState<CheckinScreen> {
     );
 
     setState(() => _isCheckingIn = false);
+    if (!mounted) return;
 
     if (result) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -142,7 +148,7 @@ class _CheckinScreenState extends ConsumerState<CheckinScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Theme.of(context).primaryColor.withOpacity(0.1),
+                color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Column(

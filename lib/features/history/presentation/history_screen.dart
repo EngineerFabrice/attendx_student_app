@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'providers/history_provider.dart';
 import 'widgets/attendance_list_item.dart';
+import '../../../../shared/widgets/main_bottom_nav.dart';
 
 class HistoryScreen extends ConsumerWidget {
   const HistoryScreen({super.key});
@@ -20,21 +21,28 @@ class HistoryScreen extends ConsumerWidget {
           ),
         ],
       ),
+      bottomNavigationBar: const MainBottomNav(currentIndex: 1),
       body: historyState.isLoading
           ? const Center(child: CircularProgressIndicator())
-          : historyState.records.isEmpty
-              ? const Center(
-                  child: Text('No attendance records found'),
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: historyState.records.length,
-                  itemBuilder: (context, index) {
-                    return AttendanceListItem(
-                      record: historyState.records[index],
-                    );
-                  },
-                ),
+          : RefreshIndicator(
+              onRefresh: () => ref.read(historyProvider.notifier).loadHistory(),
+              child: historyState.records.isEmpty
+                  ? ListView(
+                      children: const [
+                        SizedBox(height: 200),
+                        Center(child: Text('No attendance records found')),
+                      ],
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: historyState.records.length,
+                      itemBuilder: (context, index) {
+                        return AttendanceListItem(
+                          record: historyState.records[index],
+                        );
+                      },
+                    ),
+            ),
     );
   }
 
@@ -43,12 +51,7 @@ class HistoryScreen extends ConsumerWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Filter'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Filter by course (coming soon)'),
-          ],
-        ),
+        content: const Text('Filter by course (coming soon)'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),

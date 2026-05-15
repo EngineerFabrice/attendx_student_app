@@ -6,6 +6,7 @@ import '../features/dashboard/presentation/dashboard_screen.dart';
 import '../features/history/presentation/history_screen.dart';
 import '../features/analytics/presentation/analytics_screen.dart';
 import '../features/profile/presentation/profile_screen.dart';
+import '../features/profile/presentation/notification_preferences_screen.dart';
 import '../features/checkin/presentation/checkin_screen.dart';
 
 class AttendXApp extends StatelessWidget {
@@ -25,6 +26,8 @@ class AttendXApp extends StatelessWidget {
         '/history': (context) => const HistoryScreen(),
         '/analytics': (context) => const AnalyticsScreen(),
         '/profile': (context) => const ProfileScreen(),
+        '/notification-preferences': (context) =>
+            const NotificationPreferencesScreen(),
       },
       onGenerateRoute: (settings) {
         if (settings.name == '/checkin') {

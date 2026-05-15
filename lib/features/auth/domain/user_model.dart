@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:equatable/equatable.dart';
 
 class UserModel extends Equatable {
@@ -48,7 +49,7 @@ class UserModel extends Equatable {
   }
 
   String toJsonString() {
-    return toJson().toString();
+    return jsonEncode(toJson());
   }
   
   @override

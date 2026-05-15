@@ -72,7 +72,7 @@ class AppTheme {
     ),
     
     chipTheme: ChipThemeData(
-      backgroundColor: AppColors.primaryLight.withOpacity(0.2),
+      backgroundColor: AppColors.primaryLight.withValues(alpha: 0.2),
       selectedColor: AppColors.primary,
       labelStyle: const TextStyle(color: AppColors.textPrimary),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),

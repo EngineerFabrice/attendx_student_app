@@ -1,8 +1,8 @@
+import 'dart:convert';
 import 'package:dio/dio.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_endpoints.dart';
 import '../../../core/storage/secure_storage.dart';
-import '../../../core/utils/device_fingerprint.dart';
 import '../domain/user_model.dart';
 
 class AuthRepository {
@@ -21,14 +21,25 @@ class AuthRepository {
     return response.data['data'];
   }
 
+  Future<void> saveUserData(
+    UserModel user, String accessToken, String refreshToken) async {
+    await _storage.saveTokens(accessToken, refreshToken);
+    await _storage.saveUser(user.toJsonString());
+  }
+
   Future<void> logout() async {
     await _storage.clearTokens();
   }
 
   Future<UserModel?> getCurrentUser() async {
+    final token = await _storage.getAccessToken();
+    if (token == null) return null;
     final userJson = await _storage.getUser();
     if (userJson == null) return null;
-    // Parse JSON here
-    return null;
+    try {
+      return UserModel.fromJson(jsonDecode(userJson) as Map<String, dynamic>);
+    } catch (_) {
+      return null;
+    }
   }
 }
