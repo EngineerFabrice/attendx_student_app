@@ -8,6 +8,7 @@ import '../features/analytics/presentation/analytics_screen.dart';
 import '../features/profile/presentation/profile_screen.dart';
 import '../features/profile/presentation/notification_preferences_screen.dart';
 import '../features/checkin/presentation/checkin_screen.dart';
+import '../features/auth/presentation/forgot_password_screen.dart';
 
 class AttendXApp extends StatelessWidget {
   const AttendXApp({super.key});
@@ -28,6 +29,7 @@ class AttendXApp extends StatelessWidget {
         '/profile': (context) => const ProfileScreen(),
         '/notification-preferences': (context) =>
             const NotificationPreferencesScreen(),
+        '/forgot-password': (context) => const ForgotPasswordScreen(),
       },
       onGenerateRoute: (settings) {
         if (settings.name == '/checkin') {
