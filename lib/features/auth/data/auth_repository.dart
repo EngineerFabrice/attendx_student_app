@@ -28,7 +28,14 @@ class AuthRepository {
   }
 
   Future<void> logout() async {
+    try {
+      await _dio.post(ApiEndpoints.logout);
+    } catch (_) {}
     await _storage.clearTokens();
+  }
+
+  Future<String?> getAccessToken() async {
+    return _storage.getAccessToken();
   }
 
   Future<UserModel?> getCurrentUser() async {

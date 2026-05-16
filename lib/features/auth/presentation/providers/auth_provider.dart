@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/auth_repository.dart';
 import '../../domain/user_model.dart';
 import '../../domain/auth_state.dart';
+import '../../../../core/services/socket_service.dart';
 
 final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   return AuthNotifier();
@@ -18,11 +19,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final data = await _repository.login(email, password);
       final user = UserModel.fromJson(data['user'] as Map<String, dynamic>);
       final tokens = data['tokens'] as Map<String, dynamic>;
-      await _repository.saveUserData(
-        user,
-        tokens['accessToken'] as String,
-        tokens['refreshToken'] as String,
-      );
+      final accessToken = tokens['accessToken'] as String;
+      final refreshToken = tokens['refreshToken'] as String;
+
+      await _repository.saveUserData(user, accessToken, refreshToken);
+
+      // Connect real-time socket after successful auth
+      SocketService().connect(accessToken);
+
       state = AuthAuthenticated(user);
     } catch (e) {
       state = const AuthError('Login failed. Please check your credentials.');
@@ -31,6 +35,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   Future<void> logout() async {
     state = const AuthLoading();
+    SocketService().disconnect();
     await _repository.logout();
     state = const AuthUnauthenticated();
   }
@@ -39,6 +44,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = const AuthLoading();
     final user = await _repository.getCurrentUser();
     if (user != null) {
+      final token = await _repository.getAccessToken();
+      if (token != null) SocketService().connect(token);
       state = AuthAuthenticated(user);
     } else {
       state = const AuthUnauthenticated();

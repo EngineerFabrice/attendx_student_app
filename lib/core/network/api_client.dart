@@ -1,12 +1,14 @@
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
-import 'mock_interceptor.dart';
+import '../storage/secure_storage.dart';
 
 class ApiClient {
-  static const String baseUrl = 'https://api.attendx.ac.rw/v1';
-  static const bool useMocks = true;
-  
+  // Android emulator → use 10.0.2.2 to reach host machine localhost.
+  // Physical device  → replace with your machine's LAN IP (e.g. 192.168.1.x).
+  // iOS simulator    → use localhost.
+  static const String baseUrl = 'http://10.0.2.2:5000/api';
+
   late Dio _dio;
+  final SecureStorage _storage = SecureStorage();
 
   ApiClient() {
     _dio = Dio(BaseOptions(
@@ -16,9 +18,20 @@ class ApiClient {
       headers: {'Content-Type': 'application/json'},
     ));
 
-    if (kDebugMode && useMocks) {
-      _dio.interceptors.add(MockInterceptor());
-    }
+    // Inject JWT Bearer token on every request
+    _dio.interceptors.add(InterceptorsWrapper(
+      onRequest: (options, handler) async {
+        final token = await _storage.getAccessToken();
+        if (token != null) {
+          options.headers['Authorization'] = 'Bearer $token';
+        }
+        handler.next(options);
+      },
+      onError: (err, handler) {
+        // 401 handled per-feature (auth_provider clears storage)
+        handler.next(err);
+      },
+    ));
   }
 
   Dio get dio => _dio;

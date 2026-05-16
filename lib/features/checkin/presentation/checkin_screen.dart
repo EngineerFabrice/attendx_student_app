@@ -110,6 +110,7 @@ class _CheckinScreenState extends ConsumerState<CheckinScreen> {
       sessionId: sessionId,
       latitude: _currentPosition!.latitude,
       longitude: _currentPosition!.longitude,
+      courseName: courseName,
     );
 
     setState(() => _isCheckingIn = false);

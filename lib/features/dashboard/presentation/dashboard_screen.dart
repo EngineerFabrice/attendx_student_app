@@ -10,7 +10,7 @@ class DashboardScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final dashboardState = ref.watch(dashboardProvider);
+    final state = ref.watch(dashboardProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -22,7 +22,7 @@ class DashboardScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: dashboardState.isLoading
+      body: state.isLoading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
               onRefresh: () => ref.read(dashboardProvider.notifier).refresh(),
@@ -32,39 +32,68 @@ class DashboardScreen extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Greeting
                     Text(
-                      'Hello, ${dashboardState.profile?.fullName.split(' ').first ?? 'Student'}!',
-                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                      'Hello, ${state.profile?.fullName.split(' ').first ?? 'Student'}!',
+                      style: const TextStyle(
+                          fontSize: 24, fontWeight: FontWeight.bold),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 4),
                     Text(
-                      'Reg: ${dashboardState.profile?.regNumber ?? 'N/A'}',
+                      'Reg: ${state.profile?.regNumber ?? 'N/A'}',
                       style: TextStyle(color: Colors.grey.shade600),
                     ),
                     const SizedBox(height: 24),
-                    
+
+                    // Attendance summary
                     AttendanceSummaryCard(
-                      rate: dashboardState.overallAttendanceRate ?? 0,
+                      rate: state.overallAttendanceRate ?? 0,
                     ),
                     const SizedBox(height: 24),
-                    
-                    if (dashboardState.todaySessions.isNotEmpty) ...[
-                      const Text(
-                        'Active Sessions',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                      ),
-                      const SizedBox(height: 12),
-                      ...dashboardState.todaySessions.map((session) => Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: ActiveSessionCard(session: session),
-                      )),
-                    ] else ...[
-                      _buildEmptySessionsCard(),
-                    ],
-                    
+
+                    // Stats row
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _StatCard(
+                            title: 'Courses',
+                            value: '${state.profile?.enrolledCourses ?? 0}',
+                            icon: Icons.book_outlined,
+                            color: Colors.blue,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _StatCard(
+                            title: 'Attendance',
+                            value:
+                                '${state.overallAttendanceRate?.toInt() ?? 0}%',
+                            icon: Icons.trending_up,
+                            color: (state.overallAttendanceRate ?? 0) >= 75
+                                ? Colors.green
+                                : Colors.orange,
+                          ),
+                        ),
+                      ],
+                    ),
+
                     const SizedBox(height: 24),
-                    
-                    _buildStatsRow(dashboardState),
+
+                    // Today's Classes
+                    const Text(
+                      "Today's Classes",
+                      style: TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 12),
+
+                    if (state.todaySessions.isEmpty)
+                      _EmptyClassesCard()
+                    else
+                      ...state.todaySessions.map((session) => Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: ActiveSessionCard(session: session),
+                          )),
                   ],
                 ),
               ),
@@ -72,8 +101,11 @@ class DashboardScreen extends ConsumerWidget {
       bottomNavigationBar: const MainBottomNav(currentIndex: 0),
     );
   }
+}
 
-  Widget _buildEmptySessionsCard() {
+class _EmptyClassesCard extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -81,46 +113,34 @@ class DashboardScreen extends ConsumerWidget {
           children: [
             Icon(Icons.event_busy, size: 48, color: Colors.grey.shade400),
             const SizedBox(height: 12),
-            Text(
-              'No active sessions',
-              style: TextStyle(color: Colors.grey.shade600),
-            ),
+            Text('No classes today',
+                style: TextStyle(color: Colors.grey.shade600)),
             const SizedBox(height: 4),
-            Text(
-              'Check back during class time',
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
-            ),
+            Text('Check back during class time',
+                style:
+                    TextStyle(fontSize: 12, color: Colors.grey.shade500)),
           ],
         ),
       ),
     );
   }
-  
-  Widget _buildStatsRow(DashboardState state) {
-    return Row(
-      children: [
-        Expanded(
-          child: _buildStatCard(
-            'Enrolled Courses',
-            '${state.profile?.enrolledCourses ?? 0}',
-            Icons.book,
-            Colors.blue,
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _buildStatCard(
-            'Attendance',
-            '${state.overallAttendanceRate?.toInt() ?? 0}%',
-            Icons.trending_up,
-            Colors.green,
-          ),
-        ),
-      ],
-    );
-  }
-  
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+}
+
+class _StatCard extends StatelessWidget {
+  final String title;
+  final String value;
+  final IconData icon;
+  final Color color;
+
+  const _StatCard({
+    required this.title,
+    required this.value,
+    required this.icon,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -129,18 +149,15 @@ class DashboardScreen extends ConsumerWidget {
           children: [
             Icon(icon, color: color, size: 24),
             const SizedBox(height: 12),
-            Text(
-              value,
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            Text(
-              title,
-              style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
-            ),
+            Text(value,
+                style: const TextStyle(
+                    fontSize: 24, fontWeight: FontWeight.bold)),
+            Text(title,
+                style: TextStyle(
+                    color: Colors.grey.shade600, fontSize: 12)),
           ],
         ),
       ),
     );
   }
-  
 }

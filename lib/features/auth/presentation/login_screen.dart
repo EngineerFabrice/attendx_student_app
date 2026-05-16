@@ -18,9 +18,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _isLoading = false;
 
   Future<void> _handleLogin() async {
-    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+    if (_emailController.text.trim().isEmpty ||
+        _passwordController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter email and password')),
+        const SnackBar(content: Text('Please enter your email and password')),
       );
       return;
     }
@@ -28,29 +29,31 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     setState(() => _isLoading = true);
 
     await ref.read(authProvider.notifier).login(
-      _emailController.text,
-      _passwordController.text,
-    );
+          _emailController.text.trim(),
+          _passwordController.text,
+        );
 
     setState(() => _isLoading = false);
 
     final authState = ref.read(authProvider);
+    if (!mounted) return;
+
     if (authState is AuthAuthenticated) {
-      if (mounted) {
-        Navigator.pushReplacementNamed(context, '/dashboard');
-      }
+      Navigator.pushReplacementNamed(context, '/dashboard');
     } else if (authState is AuthError) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(authState.message), backgroundColor: Colors.red),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(authState.message),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
+    final primaryColor = Theme.of(context).primaryColor;
 
     return Scaffold(
       body: SafeArea(
@@ -58,41 +61,52 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           padding: const EdgeInsets.all(24.0),
           child: SingleChildScrollView(
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
+                const SizedBox(height: 48),
+
                 // Logo
                 Container(
-                  width: 100,
-                  height: 100,
+                  width: 90,
+                  height: 90,
                   decoration: BoxDecoration(
-                    color: Theme.of(context).primaryColor,
+                    gradient: LinearGradient(
+                      colors: [primaryColor, primaryColor.withValues(alpha: 0.7)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.1),
+                        color: primaryColor.withValues(alpha: 0.3),
                         blurRadius: 20,
-                        offset: const Offset(0, 10),
+                        offset: const Offset(0, 8),
                       ),
                     ],
                   ),
-                  child: const Icon(Icons.school, size: 50, color: Colors.white),
+                  child: const Icon(Icons.school, size: 48, color: Colors.white),
                 ),
-                const SizedBox(height: 32),
+
+                const SizedBox(height: 24),
+
                 const Text(
                   'AttendX',
                   style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Student Attendance System',
-                  style: TextStyle(fontSize: 16, color: Colors.grey),
+                const SizedBox(height: 6),
+                Text(
+                  'Smart Attendance for Modern Education',
+                  style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                  textAlign: TextAlign.center,
                 ),
+
                 const SizedBox(height: 48),
 
                 // Email field
                 TextField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
+                  textInputAction: TextInputAction.next,
                   decoration: const InputDecoration(
                     labelText: 'Email',
                     prefixIcon: Icon(Icons.email_outlined),
@@ -105,57 +119,55 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 TextField(
                   controller: _passwordController,
                   obscureText: !_isPasswordVisible,
+                  textInputAction: TextInputAction.done,
+                  onSubmitted: (_) => _handleLogin(),
                   decoration: InputDecoration(
                     labelText: 'Password',
                     prefixIcon: const Icon(Icons.lock_outline),
                     suffixIcon: IconButton(
-                      icon: Icon(_isPasswordVisible ? Icons.visibility_off : Icons.visibility),
-                      onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
+                      icon: Icon(_isPasswordVisible
+                          ? Icons.visibility_off
+                          : Icons.visibility),
+                      onPressed: () => setState(
+                          () => _isPasswordVisible = !_isPasswordVisible),
                     ),
                     border: const OutlineInputBorder(),
                   ),
                 ),
-                const SizedBox(height: 24),
+
+                const SizedBox(height: 8),
+
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () {},
+                    child: const Text('Forgot Password?'),
+                  ),
+                ),
+
+                const SizedBox(height: 16),
 
                 // Login button
                 _isLoading || authState is AuthLoading
                     ? const Center(child: CircularProgressIndicator())
                     : PrimaryButton(
                         onPressed: _handleLogin,
-                        text: 'Login',
+                        text: 'Sign In',
                         width: double.infinity,
                       ),
 
-                const SizedBox(height: 16),
-                TextButton(
-                  onPressed: () {},
-                  child: const Text('Forgot Password?'),
-                ),
-
                 const SizedBox(height: 32),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade100,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Column(
-                    children: [
-                      const Text(
-                        'Demo Credentials',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Email: student@attendx.com',
-                        style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
-                      ),
-                      Text(
-                        'Password: any password',
-                        style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
-                      ),
-                    ],
-                  ),
+
+                // Features summary
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _FeatureTag(Icons.gps_fixed, 'GPS Check-in'),
+                    const SizedBox(width: 16),
+                    _FeatureTag(Icons.bar_chart, 'Analytics'),
+                    const SizedBox(width: 16),
+                    _FeatureTag(Icons.notifications_outlined, 'Real-time'),
+                  ],
                 ),
               ],
             ),
@@ -170,5 +182,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+}
+
+class _FeatureTag extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _FeatureTag(this.icon, this.label);
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Icon(icon, size: 20, color: Colors.grey.shade500),
+        const SizedBox(height: 4),
+        Text(label,
+            style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
+      ],
+    );
   }
 }
