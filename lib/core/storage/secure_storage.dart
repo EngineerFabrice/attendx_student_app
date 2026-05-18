@@ -1,4 +1,5 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../utils/device_fingerprint.dart';
 
 class SecureStorage {
   static const String _accessTokenKey = 'access_token';
@@ -38,9 +39,7 @@ class SecureStorage {
   Future<String> getOrCreateDeviceFingerprint() async {
     final existing = await _storage.read(key: _deviceFingerprintKey);
     if (existing != null) return existing;
-    
-    // Generate simple fingerprint
-    final fingerprint = DateTime.now().millisecondsSinceEpoch.toString();
+    final fingerprint = await DeviceFingerprint.generate();
     await _storage.write(key: _deviceFingerprintKey, value: fingerprint);
     return fingerprint;
   }

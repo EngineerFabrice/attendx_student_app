@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'providers/analytics_provider.dart';
+import '../../../../core/constants/app_constants.dart';
 import 'widgets/attendance_trend_chart.dart';
 import '../../../../shared/widgets/main_bottom_nav.dart';
 
@@ -16,7 +17,13 @@ class AnalyticsScreen extends ConsumerWidget {
       bottomNavigationBar: const MainBottomNav(currentIndex: 2),
       body: state.isLoading
           ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
+          : state.error != null && state.courseStats.isEmpty
+              ? _ErrorView(
+                  message: state.error!,
+                  onRetry: () =>
+                      ref.read(analyticsProvider.notifier).loadAnalytics(),
+                )
+              : RefreshIndicator(
               onRefresh: () =>
                   ref.read(analyticsProvider.notifier).loadAnalytics(),
               child: SingleChildScrollView(
@@ -61,9 +68,10 @@ class AnalyticsScreen extends ConsumerWidget {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              (state.overallRate ?? 0) >= 75
-                                  ? 'Good standing'
-                                  : 'Below minimum threshold',
+                              (state.overallRate ?? 0) >=
+                                    AppConstants.minAttendanceRate
+                                ? 'Good standing'
+                                : 'Below ${AppConstants.minAttendanceRate.toInt()}% minimum threshold',
                               style: TextStyle(
                                 fontSize: 12,
                                 color: _rateColor(state.overallRate ?? 0),
@@ -271,6 +279,40 @@ class _StreakCard extends StatelessWidget {
   }
 }
 
+class _ErrorView extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+
+  const _ErrorView({required this.message, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.bar_chart, size: 64, color: Colors.grey.shade400),
+            const SizedBox(height: 16),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey.shade600),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Retry'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _RiskAlertBanner extends StatelessWidget {
   final List<CourseStat> courses;
 
@@ -306,7 +348,7 @@ class _RiskAlertBanner extends StatelessWidget {
           ...courses.map((c) => Padding(
                 padding: const EdgeInsets.only(top: 2),
                 child: Text(
-                  '• ${c.name} — ${c.attendanceRate.toInt()}% (below 75%)',
+                  '• ${c.name} — ${c.attendanceRate.toInt()}% (below ${AppConstants.minAttendanceRate.toInt()}%)',
                   style: TextStyle(fontSize: 13, color: Colors.red.shade800),
                 ),
               )),

@@ -40,8 +40,53 @@ class MockInterceptor extends Interceptor {
       ));
     }
 
+    if (path.contains('/auth/refresh')) {
+      return handler.resolve(Response(
+        requestOptions: options,
+        statusCode: 200,
+        data: {
+          'success': true,
+          'data': {
+            'accessToken': 'mock-jwt-access-token-refreshed',
+            'refreshToken': 'mock-jwt-refresh-token',
+            'expiresIn': 3600,
+          },
+        },
+      ));
+    }
+
+    if (path.contains('/auth/forgot-password')) {
+      return handler.resolve(Response(
+        requestOptions: options,
+        statusCode: 200,
+        data: {
+          'success': true,
+          'data': {
+            'message': 'Reset code sent to your email',
+            'resetToken': 'MOCK-RESET-123456',
+          },
+        },
+      ));
+    }
+
+    if (path.contains('/auth/reset-password')) {
+      return handler.resolve(Response(
+        requestOptions: options,
+        statusCode: 200,
+        data: {'success': true, 'data': {'message': 'Password updated successfully'}},
+      ));
+    }
+
+    if (path.contains('/device-token')) {
+      return handler.resolve(Response(
+        requestOptions: options,
+        statusCode: 200,
+        data: {'success': true},
+      ));
+    }
+
     // ── Dashboard ────────────────────────────────────────────────────────────
-    if (path.contains('/students/dashboard')) {
+    if (path.contains('/student/dashboard')) {
       return handler.resolve(Response(
         requestOptions: options,
         statusCode: 200,
@@ -99,7 +144,7 @@ class MockInterceptor extends Interceptor {
     }
 
     // ── Check-in ─────────────────────────────────────────────────────────────
-    if (path.contains('/checkin')) {
+    if (path.contains('/student/checkin')) {
       return handler.resolve(Response(
         requestOptions: options,
         statusCode: 200,
@@ -116,7 +161,7 @@ class MockInterceptor extends Interceptor {
     }
 
     // ── Attendance History ────────────────────────────────────────────────────
-    if (path.contains('/attendance/history')) {
+    if (path.contains('/student/history')) {
       final now = DateTime.now();
       final records = <Map<String, dynamic>>[];
 
@@ -128,7 +173,6 @@ class MockInterceptor extends Interceptor {
         {'id': 'c5', 'code': 'CS350', 'name': 'Computer Networks', 'room': 'LT-2'},
       ];
 
-      // Present pattern: mostly present, some absences to create realistic data
       final sessionPattern = [
         {'daysAgo': 1, 'courseIdx': 0, 'status': 'present'},
         {'daysAgo': 2, 'courseIdx': 1, 'status': 'present'},
@@ -193,7 +237,7 @@ class MockInterceptor extends Interceptor {
     }
 
     // ── Analytics ────────────────────────────────────────────────────────────
-    if (path.contains('/students/analytics')) {
+    if (path.contains('/student/analytics')) {
       return handler.resolve(Response(
         requestOptions: options,
         statusCode: 200,
@@ -252,7 +296,7 @@ class MockInterceptor extends Interceptor {
     }
 
     // ── Courses ───────────────────────────────────────────────────────────────
-    if (path.contains('/students/courses')) {
+    if (path.contains('/student/courses')) {
       return handler.resolve(Response(
         requestOptions: options,
         statusCode: 200,
@@ -270,7 +314,7 @@ class MockInterceptor extends Interceptor {
     }
 
     // ── Active sessions ───────────────────────────────────────────────────────
-    if (path.contains('/students/sessions/active')) {
+    if (path.contains('/student/sessions/active')) {
       return handler.resolve(Response(
         requestOptions: options,
         statusCode: 200,
@@ -294,6 +338,30 @@ class MockInterceptor extends Interceptor {
                   DateTime.now().add(const Duration(minutes: 90)).toIso8601String(),
             },
           ],
+        },
+      ));
+    }
+
+    // ── Notification preferences ──────────────────────────────────────────────
+    if (path.contains('/student/notification-preferences')) {
+      if (options.method == 'PUT') {
+        return handler.resolve(Response(
+          requestOptions: options,
+          statusCode: 200,
+          data: {'success': true},
+        ));
+      }
+      return handler.resolve(Response(
+        requestOptions: options,
+        statusCode: 200,
+        data: {
+          'success': true,
+          'data': {
+            'sessionStart': true,
+            'absenceAlert': true,
+            'lowAttendance': true,
+            'weeklyReport': false,
+          },
         },
       ));
     }

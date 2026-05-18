@@ -32,14 +32,23 @@ class _CheckinScreenState extends ConsumerState<CheckinScreen> {
     super.didChangeDependencies();
     if (_initialized) return;
     _initialized = true;
-    final args = ModalRoute.of(context)!.settings.arguments as Map;
-    sessionId = args['sessionId'] as String;
-    sessionCode = args['sessionCode'] as String;
-    courseName = args['courseName'] as String;
-    roomName = args['roomName'] as String;
-    classroomLat = args['classroomLat'] as double;
-    classroomLng = args['classroomLng'] as double;
-    radiusM = args['radiusM'] as double;
+
+    final args =
+        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    if (args == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) Navigator.pop(context);
+      });
+      return;
+    }
+
+    sessionId     = args['sessionId']     as String? ?? '';
+    sessionCode   = args['sessionCode']   as String? ?? '';
+    courseName    = args['courseName']    as String? ?? '';
+    roomName      = args['roomName']      as String? ?? '';
+    classroomLat  = (args['classroomLat'] as num?)?.toDouble() ?? 0.0;
+    classroomLng  = (args['classroomLng'] as num?)?.toDouble() ?? 0.0;
+    radiusM       = (args['radiusM']      as num?)?.toDouble() ?? 30.0;
     _getCurrentLocation();
   }
 
@@ -93,11 +102,19 @@ class _CheckinScreenState extends ConsumerState<CheckinScreen> {
 
   bool get _isWithinGeofence => _distance != null && _distance! <= radiusM;
 
+  String _formatDistance(double meters) {
+    if (meters >= 1000) return '${(meters / 1000).toStringAsFixed(1)} km';
+    return '${meters.toInt()} m';
+  }
+
   Future<void> _handleCheckIn() async {
     if (!_isWithinGeofence) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('You are ${_distance?.toInt()}m away. Move within ${radiusM.toInt()}m of $roomName.'),
+          content: Text(
+            'You are ${_formatDistance(_distance ?? 0)} away. '
+            'Move within ${_formatDistance(radiusM)} of $roomName.',
+          ),
           backgroundColor: Colors.orange,
         ),
       );
@@ -216,7 +233,7 @@ class _CheckinScreenState extends ConsumerState<CheckinScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Distance: ${_distance?.toInt() ?? 0}m / ${radiusM.toInt()}m',
+                    'Distance: ${_formatDistance(_distance ?? 0)} / ${_formatDistance(radiusM)}',
                     style: const TextStyle(fontSize: 16),
                   ),
                   const SizedBox(height: 16),

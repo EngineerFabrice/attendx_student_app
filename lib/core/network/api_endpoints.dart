@@ -1,7 +1,10 @@
 class ApiEndpoints {
   // Auth
-  static const String login  = '/auth/login';
-  static const String logout = '/auth/logout';
+  static const String login          = '/auth/login';
+  static const String logout         = '/auth/logout';
+  static const String refreshToken   = '/auth/refresh';
+  static const String forgotPassword = '/auth/forgot-password';
+  static const String resetPassword  = '/auth/reset-password';
 
   // Student
   static const String studentDashboard = '/student/dashboard';
@@ -14,5 +17,9 @@ class ApiEndpoints {
   static const String checkin = '/student/checkin';
 
   // Profile
-  static const String profile = '/auth/me';
+  static const String profile                  = '/auth/me';
+  static const String notificationPreferences  = '/student/notification-preferences';
+
+  // Device / push
+  static const String deviceToken = '/student/device-token';
 }

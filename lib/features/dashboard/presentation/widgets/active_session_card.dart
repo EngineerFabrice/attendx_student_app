@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../providers/dashboard_provider.dart';
 
 class ActiveSessionCard extends StatelessWidget {
@@ -117,9 +118,7 @@ class ActiveSessionCard extends StatelessWidget {
     );
   }
 
-  String _formatTime(DateTime time) {
-    return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
-  }
+  String _formatTime(DateTime time) => DateFormat.jm().format(time);
 }
 
 class _StatusBadge extends StatelessWidget {

@@ -4,12 +4,30 @@ import 'providers/dashboard_provider.dart';
 import 'widgets/active_session_card.dart';
 import 'widgets/attendance_summary_card.dart';
 import '../../../../shared/widgets/main_bottom_nav.dart';
+import '../../../../core/services/notification_service.dart';
 
-class DashboardScreen extends ConsumerWidget {
+class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends ConsumerState<DashboardScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Handle deep-link from a notification tap (app was launched or brought to foreground).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final pending = NotificationService.consumePendingRoute();
+      if (pending != null && mounted) {
+        Navigator.pushNamed(context, pending.route);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(dashboardProvider);
 
     return Scaffold(
@@ -24,7 +42,13 @@ class DashboardScreen extends ConsumerWidget {
       ),
       body: state.isLoading
           ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
+          : state.error != null && state.profile == null
+              ? _ErrorView(
+                  message: state.error!,
+                  onRetry: () =>
+                      ref.read(dashboardProvider.notifier).loadDashboard(),
+                )
+              : RefreshIndicator(
               onRefresh: () => ref.read(dashboardProvider.notifier).refresh(),
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
@@ -99,6 +123,40 @@ class DashboardScreen extends ConsumerWidget {
               ),
             ),
       bottomNavigationBar: const MainBottomNav(currentIndex: 0),
+    );
+  }
+}
+
+class _ErrorView extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+
+  const _ErrorView({required this.message, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.wifi_off_rounded, size: 64, color: Colors.grey.shade400),
+            const SizedBox(height: 16),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey.shade600),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Retry'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

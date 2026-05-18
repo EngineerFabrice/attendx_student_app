@@ -80,6 +80,7 @@ class HistoryState {
   final DateTime focusedDay;
   final Map<DateTime, List<AttendanceRecord>> eventsMap;
   final bool isLoading;
+  final String? error;
 
   HistoryState({
     this.allRecords = const [],
@@ -89,6 +90,7 @@ class HistoryState {
     DateTime? focusedDay,
     this.eventsMap = const {},
     this.isLoading = false,
+    this.error,
   }) : focusedDay = focusedDay ?? DateTime.now();
 
   List<AttendanceRecord> get filteredRecords {
@@ -115,8 +117,10 @@ class HistoryState {
     DateTime? focusedDay,
     Map<DateTime, List<AttendanceRecord>>? eventsMap,
     bool? isLoading,
+    String? error,
     bool clearSelectedDay = false,
     bool clearSelectedCourse = false,
+    bool clearError = false,
   }) {
     return HistoryState(
       allRecords: allRecords ?? this.allRecords,
@@ -126,6 +130,7 @@ class HistoryState {
       focusedDay: focusedDay ?? this.focusedDay,
       eventsMap: eventsMap ?? this.eventsMap,
       isLoading: isLoading ?? this.isLoading,
+      error: clearError ? null : (error ?? this.error),
     );
   }
 }
@@ -145,21 +150,18 @@ class HistoryNotifier extends StateNotifier<HistoryState> {
   }
 
   Future<void> loadHistory() async {
-    state = state.copyWith(isLoading: true);
+    state = state.copyWith(isLoading: true, clearError: true);
     try {
       final results = await Future.wait([
         _api.getHistory(),
         _api.getCourses(),
       ]);
 
-      final historyResp = results[0];
-      final coursesResp = results[1];
-
-      final records = (historyResp.data['data'] as List)
+      final records = (results[0].data['data'] as List)
           .map((j) => AttendanceRecord.fromJson(j as Map<String, dynamic>))
           .toList();
 
-      final courses = (coursesResp.data['data'] as List)
+      final courses = (results[1].data['data'] as List)
           .map((j) => CourseInfo.fromJson(j as Map<String, dynamic>))
           .toList();
 
@@ -175,15 +177,17 @@ class HistoryNotifier extends StateNotifier<HistoryState> {
         eventsMap: eventsMap,
         isLoading: false,
       );
-    } catch (e) {
-      state = state.copyWith(isLoading: false);
+    } catch (_) {
+      state = state.copyWith(
+        isLoading: false,
+        error: 'Failed to load attendance history. Pull down to retry.',
+      );
     }
   }
 
   void selectDay(DateTime day) {
     final norm = _normalizeDate(day);
     if (state.selectedDay != null && _normalizeDate(state.selectedDay!) == norm) {
-      // Tap again to deselect
       state = state.copyWith(clearSelectedDay: true, focusedDay: day);
     } else {
       state = state.copyWith(selectedDay: day, focusedDay: day);

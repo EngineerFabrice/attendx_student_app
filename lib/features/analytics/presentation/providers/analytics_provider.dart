@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/analytics_api.dart';
+import '../../../../core/constants/app_constants.dart';
 
 class TrendDataPoint {
   final DateTime date;
@@ -30,7 +31,7 @@ class CourseStat {
     required this.presentSessions,
   });
 
-  bool get isAtRisk => attendanceRate < 75.0;
+  bool get isAtRisk => attendanceRate < AppConstants.minAttendanceRate;
 
   factory CourseStat.fromJson(Map<String, dynamic> j) => CourseStat(
         id: j['id'] as String,
@@ -49,6 +50,7 @@ class AnalyticsState {
   final List<TrendDataPoint> trendData;
   final List<CourseStat> courseStats;
   final bool isLoading;
+  final String? error;
 
   AnalyticsState({
     this.overallRate,
@@ -57,6 +59,7 @@ class AnalyticsState {
     this.trendData = const [],
     this.courseStats = const [],
     this.isLoading = false,
+    this.error,
   });
 
   List<CourseStat> get atRiskCourses =>
@@ -69,6 +72,8 @@ class AnalyticsState {
     List<TrendDataPoint>? trendData,
     List<CourseStat>? courseStats,
     bool? isLoading,
+    String? error,
+    bool clearError = false,
   }) {
     return AnalyticsState(
       overallRate: overallRate ?? this.overallRate,
@@ -77,6 +82,7 @@ class AnalyticsState {
       trendData: trendData ?? this.trendData,
       courseStats: courseStats ?? this.courseStats,
       isLoading: isLoading ?? this.isLoading,
+      error: clearError ? null : (error ?? this.error),
     );
   }
 }
@@ -94,7 +100,7 @@ class AnalyticsNotifier extends StateNotifier<AnalyticsState> {
   }
 
   Future<void> loadAnalytics() async {
-    state = state.copyWith(isLoading: true);
+    state = state.copyWith(isLoading: true, clearError: true);
     try {
       final response = await _api.getAnalytics();
       final data = response.data['data'] as Map<String, dynamic>;
@@ -121,12 +127,14 @@ class AnalyticsNotifier extends StateNotifier<AnalyticsState> {
         courseStats: courseStats,
         isLoading: false,
       );
-    } catch (e) {
-      state = state.copyWith(isLoading: false);
+    } catch (_) {
+      state = state.copyWith(
+        isLoading: false,
+        error: 'Failed to load analytics. Pull down to retry.',
+      );
     }
   }
 
-  // Count consecutive present sessions from most recent backwards
   int _computeCurrentStreak(List<TrendDataPoint> data) {
     int streak = 0;
     for (final point in data.reversed) {

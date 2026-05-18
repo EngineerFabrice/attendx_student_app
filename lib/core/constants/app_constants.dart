@@ -4,6 +4,7 @@ class AppConstants {
   static const int sessionTimeoutMinutes = 90;
   static const double defaultGeofenceRadius = 30.0;
   static const int attendanceWarningThreshold = 2;
+  static const double minAttendanceRate = 75.0;
   
   // Shared Preferences Keys
   static const String keyAccessToken = 'access_token';

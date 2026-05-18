@@ -38,6 +38,12 @@ class AuthRepository {
     return _storage.getAccessToken();
   }
 
+  Future<void> registerDeviceToken(String fcmToken) async {
+    try {
+      await _dio.post(ApiEndpoints.deviceToken, data: {'fcmToken': fcmToken});
+    } catch (_) {}
+  }
+
   Future<UserModel?> getCurrentUser() async {
     final token = await _storage.getAccessToken();
     if (token == null) return null;

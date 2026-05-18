@@ -45,8 +45,8 @@ dependencies:
   intl: ^0.20.2
   connectivity_plus: ^7.1.1
   flutter_local_notifications: ^21.0.0
-  firebase_core: ^4.8.0
-  firebase_messaging: ^16.2.1
+  firebase_core: ^4.9.0
+  firebase_messaging: ^16.2.2
   socket_io_client: ^2.0.3+1
   table_calendar: ^3.1.2
 

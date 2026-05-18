@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../../core/network/api_client.dart';
-import '../../../../shared/widgets/primary_button.dart';
+import '../data/auth_api.dart';
+import '../../../shared/widgets/primary_button.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -10,31 +10,34 @@ class ForgotPasswordScreen extends StatefulWidget {
 }
 
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
-  // Step 1: enter email → get reset token
-  // Step 2: enter token + new password
+  final _api = AuthApi();
+
+  // Step 1: enter email → receive reset code
+  // Step 2: enter code + new password
   int _step = 1;
 
-  final _emailCtrl  = TextEditingController();
-  final _tokenCtrl  = TextEditingController();
-  final _passCtrl   = TextEditingController();
-  bool _loading = false;
-  bool _showPass = false;
-  String? _devToken; // shown in dev mode
+  final _emailCtrl = TextEditingController();
+  final _tokenCtrl = TextEditingController();
+  final _passCtrl  = TextEditingController();
+  bool _loading    = false;
+  bool _showPass   = false;
+  String? _devToken;
 
   Future<void> _requestReset() async {
     if (_emailCtrl.text.trim().isEmpty) return;
     setState(() => _loading = true);
     try {
-      final res = await ApiClient().dio.post('/auth/forgot-password', data: {
-        'email': _emailCtrl.text.trim(),
-      });
+      final res = await _api.forgotPassword(_emailCtrl.text.trim());
       final data = res.data['data'] as Map<String, dynamic>;
-      _devToken = data['resetToken'] as String?; // only in dev
+      _devToken = data['resetToken'] as String?;
       if (mounted) {
-        setState(() { _step = 2; _loading = false; });
+        setState(() {
+          _step = 2;
+          _loading = false;
+        });
         if (_devToken != null) _tokenCtrl.text = _devToken!;
       }
-    } catch (e) {
+    } catch (_) {
       if (mounted) {
         setState(() => _loading = false);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -54,21 +57,24 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     }
     setState(() => _loading = true);
     try {
-      await ApiClient().dio.post('/auth/reset-password', data: {
-        'token': _tokenCtrl.text.trim(),
-        'newPassword': _passCtrl.text,
-      });
+      await _api.resetPassword(_tokenCtrl.text.trim(), _passCtrl.text);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Password updated! Please log in.'), backgroundColor: Colors.green),
+          const SnackBar(
+            content: Text('Password updated! Please log in.'),
+            backgroundColor: Colors.green,
+          ),
         );
         Navigator.pushReplacementNamed(context, '/login');
       }
-    } catch (e) {
+    } catch (_) {
       if (mounted) {
         setState(() => _loading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Invalid or expired token.'), backgroundColor: Colors.red),
+          const SnackBar(
+            content: Text('Invalid or expired token.'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
@@ -84,8 +90,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (_step == 1) ...[
-              const Text('Enter your email address and we\'ll send you a reset code.',
-                  style: TextStyle(color: Colors.grey)),
+              const Text(
+                'Enter your email address and we\'ll send you a reset code.',
+                style: TextStyle(color: Colors.grey),
+              ),
               const SizedBox(height: 24),
               TextField(
                 controller: _emailCtrl,
@@ -105,8 +113,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       width: double.infinity,
                     ),
             ] else ...[
-              const Text('Enter the reset code and your new password.',
-                  style: TextStyle(color: Colors.grey)),
+              const Text(
+                'Enter the reset code and your new password.',
+                style: TextStyle(color: Colors.grey),
+              ),
               if (_devToken != null)
                 Container(
                   margin: const EdgeInsets.only(top: 12),
@@ -116,8 +126,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: Colors.amber.shade300),
                   ),
-                  child: Text('Dev mode — token pre-filled: $_devToken',
-                      style: const TextStyle(fontSize: 12)),
+                  child: Text(
+                    'Dev mode — token pre-filled: $_devToken',
+                    style: const TextStyle(fontSize: 12),
+                  ),
                 ),
               const SizedBox(height: 24),
               TextField(
@@ -137,8 +149,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   prefixIcon: const Icon(Icons.lock_outline),
                   border: const OutlineInputBorder(),
                   suffixIcon: IconButton(
-                    icon: Icon(_showPass ? Icons.visibility_off : Icons.visibility),
-                    onPressed: () => setState(() => _showPass = !_showPass),
+                    icon: Icon(_showPass
+                        ? Icons.visibility_off
+                        : Icons.visibility),
+                    onPressed: () =>
+                        setState(() => _showPass = !_showPass),
                   ),
                 ),
               ),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/network/api_client.dart';
+import '../data/profile_api.dart';
 
 class _Prefs {
   final bool sessionStart;
@@ -36,7 +36,13 @@ class _Prefs {
         'weeklyReport': weeklyReport,
       };
 
-  _Prefs copyWith({bool? sessionStart, bool? absenceAlert, bool? lowAttendance, bool? weeklyReport}) => _Prefs(
+  _Prefs copyWith({
+    bool? sessionStart,
+    bool? absenceAlert,
+    bool? lowAttendance,
+    bool? weeklyReport,
+  }) =>
+      _Prefs(
         sessionStart: sessionStart ?? this.sessionStart,
         absenceAlert: absenceAlert ?? this.absenceAlert,
         lowAttendance: lowAttendance ?? this.lowAttendance,
@@ -54,6 +60,7 @@ class NotificationPreferencesScreen extends ConsumerStatefulWidget {
 
 class _NotificationPreferencesScreenState
     extends ConsumerState<NotificationPreferencesScreen> {
+  final _api = ProfileApi();
   _Prefs _prefs = _Prefs.defaults();
   bool _loading = true;
   bool _saving = false;
@@ -66,7 +73,7 @@ class _NotificationPreferencesScreenState
 
   Future<void> _load() async {
     try {
-      final res = await ApiClient().dio.get('/student/notification-preferences');
+      final res = await _api.getNotificationPreferences();
       if (mounted) {
         setState(() {
           _prefs = _Prefs.fromJson(res.data['data'] as Map<String, dynamic>);
@@ -81,19 +88,22 @@ class _NotificationPreferencesScreenState
   Future<void> _save() async {
     setState(() => _saving = true);
     try {
-      await ApiClient().dio.put(
-        '/student/notification-preferences',
-        data: _prefs.toJson(),
-      );
+      await _api.updateNotificationPreferences(_prefs.toJson());
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Preferences saved'), backgroundColor: Colors.green),
+          const SnackBar(
+            content: Text('Preferences saved'),
+            backgroundColor: Colors.green,
+          ),
         );
       }
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to save'), backgroundColor: Colors.red),
+          const SnackBar(
+            content: Text('Failed to save. Please try again.'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } finally {
@@ -110,7 +120,11 @@ class _NotificationPreferencesScreenState
           if (_saving)
             const Padding(
               padding: EdgeInsets.all(14),
-              child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
             )
           else
             TextButton(onPressed: _save, child: const Text('Save')),
@@ -125,28 +139,32 @@ class _NotificationPreferencesScreenState
                   title: 'Session Started',
                   subtitle: 'Alert when your lecturer starts a class session',
                   value: _prefs.sessionStart,
-                  onChanged: (v) => setState(() => _prefs = _prefs.copyWith(sessionStart: v)),
+                  onChanged: (v) =>
+                      setState(() => _prefs = _prefs.copyWith(sessionStart: v)),
                 ),
                 _PrefTile(
                   icon: Icons.check_circle_outline,
                   title: 'Attendance Confirmed',
                   subtitle: 'Alert when your check-in is recorded',
                   value: _prefs.absenceAlert,
-                  onChanged: (v) => setState(() => _prefs = _prefs.copyWith(absenceAlert: v)),
+                  onChanged: (v) =>
+                      setState(() => _prefs = _prefs.copyWith(absenceAlert: v)),
                 ),
                 _PrefTile(
                   icon: Icons.warning_amber_outlined,
                   title: 'Low Attendance Warning',
                   subtitle: 'Alert when your rate falls below 75%',
                   value: _prefs.lowAttendance,
-                  onChanged: (v) => setState(() => _prefs = _prefs.copyWith(lowAttendance: v)),
+                  onChanged: (v) =>
+                      setState(() => _prefs = _prefs.copyWith(lowAttendance: v)),
                 ),
                 _PrefTile(
                   icon: Icons.summarize_outlined,
                   title: 'Weekly Summary',
                   subtitle: 'Receive a weekly attendance digest',
                   value: _prefs.weeklyReport,
-                  onChanged: (v) => setState(() => _prefs = _prefs.copyWith(weeklyReport: v)),
+                  onChanged: (v) =>
+                      setState(() => _prefs = _prefs.copyWith(weeklyReport: v)),
                 ),
               ],
             ),

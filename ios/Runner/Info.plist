@@ -45,5 +45,14 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<!-- FCM: allow background fetch and remote-notification wake -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>remote-notification</string>
+	</array>
+	<!-- flutter_local_notifications: usage description shown to user on iOS -->
+	<key>NSUserNotificationUsageDescription</key>
+	<string>AttendX sends alerts when your lecturer starts a session so you can check in on time.</string>
 </dict>
 </plist>

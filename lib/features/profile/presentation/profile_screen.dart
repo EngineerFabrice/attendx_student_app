@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import '../../auth/presentation/providers/auth_provider.dart';
 import '../../../../shared/widgets/main_bottom_nav.dart';
 
@@ -146,7 +147,5 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}';
-  }
+  String _formatDate(DateTime date) => DateFormat.yMMMd().format(date);
 }
